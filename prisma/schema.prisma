@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Component {
+  id               String       @id @default(uuid())
+  name             String
+  category         String
+  subcategory      String?
+  part_number      String?
+  value            String?
+  package          String?
+  current_quantity Int          @default(0)
+  unit             String       @default("uds")
+  location         String?
+  min_stock        Int          @default(0)
+  description      String?
+  notes            String?
+  image_url        String?
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+
+  movements        Movement[]
+  loans            Loan[]
+  projects         ProjectComponent[]
+}
+
+model Movement {
+  id           String    @id @default(uuid())
+  component_id String
+  type         String    // COMPRA, USO, PERDIDA, DANO, DEVOLUCION, AJUSTE_MANUAL
+  quantity     Int
+  date         DateTime  @default(now())
+  notes        String?
+  
+  component    Component @relation(fields: [component_id], references: [id], onDelete: Cascade)
+}
+
+model Loan {
+  id                   String    @id @default(uuid())
+  component_id         String
+  quantity             Int
+  person               String
+  loan_date            DateTime  @default(now())
+  expected_return_date DateTime?
+  actual_return_date   DateTime?
+  status               String    @default("PRESTADO") // PRESTADO, DEVUELTO, PERDIDO
+  notes                String?
+
+  component            Component @relation(fields: [component_id], references: [id], onDelete: Cascade)
+}
+
+model WishlistItem {
+  id              String   @id @default(uuid())
+  name            String
+  category        String
+  quantity        Int      @default(1)
+  priority        String   @default("MEDIA") // BAJA, MEDIA, ALTA, URGENTE
+  estimated_price Float?
+  store           String?
+  url             String?
+  reason          String?
+  status          String   @default("PENDIENTE") // PENDIENTE, COMPRADO, DESCARTADO
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}
+
+model Project {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
+
+  components  ProjectComponent[]
+}
+
+model ProjectComponent {
+  id           String    @id @default(uuid())
+  project_id   String
+  component_id String
+  quantity     Int       @default(1)
+  
+  project      Project   @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  component    Component @relation(fields: [component_id], references: [id], onDelete: Cascade)
+
+  @@unique([project_id, component_id])
+}

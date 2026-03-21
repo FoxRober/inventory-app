@@ -1,0 +1,52 @@
+.loans-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.loans-content {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.prestado {
+  background-color: var(--warning-bg);
+  color: var(--warning);
+}
+
+.status-badge.devuelto {
+  background-color: var(--success-bg);
+  color: var(--success);
+}
+
+.status-badge.perdido {
+  background-color: var(--danger-bg);
+  color: var(--danger);
+}
+
+.highlight-row td {
+  background-color: rgba(245, 158, 11, 0.02);
+}
+
+.qty-indicator.neutral {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-main);
+}
+
+.\!text-success { color: var(--success) !important; }
+.\!text-danger { color: var(--danger) !important; }
+
+.hover\:\!bg-success\/10:hover { background-color: var(--success-bg) !important; }
+.hover\:\!bg-danger\/10:hover { background-color: var(--danger-bg) !important; }
