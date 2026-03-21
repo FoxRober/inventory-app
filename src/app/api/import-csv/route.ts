@@ -11,11 +11,16 @@ export async function POST(request: Request) {
     }
 
     const text = await file.text();
-    const rows = text.split('\n').filter(row => row.trim().length > 0);
+    // Support both Windows \r\n and Unix \n
+    const rows = text.split(/\r?\n/).filter(row => row.trim().length > 0);
     
     if (rows.length <= 1) {
       return NextResponse.json({ error: "El archivo parece estar vacío o no tener datos válidos" }, { status: 400 });
     }
+
+    // Detect delimiter from the first row (headers)
+    const headerRow = rows[0];
+    const delimiter = headerRow.split(';').length > headerRow.split(',').length ? ';' : ',';
 
     // Skip the first row (headers)
     const dataRows = rows.slice(1);
@@ -34,7 +39,7 @@ export async function POST(request: Request) {
           i++; // skip escaped quote
         } else if (char === '"') {
           inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
+        } else if (char === delimiter && !inQuotes) {
           columns.push(currentString);
           currentString = "";
         } else {
@@ -45,13 +50,16 @@ export async function POST(request: Request) {
 
       if (columns.length < 2) continue; // Skip invalid rows
 
+      // Normalize columns (remove trailing \r just in case)
+      const cleanColumns = columns.map(c => c.replace(/\r$/, '').trim());
+
       // Map columns based on the export format we defined earlier
       // 0: ID, 1: Nombre, 2: Categoría, 3: Subcategoría, 4: Referencia, 5: Valor, 6: Encapsulado, 
       // 7: Cantidad, 8: Unidad, 9: Ubicación, 10: Stock Mínimo, 11: Descripción, 12: Notas
-      const id = columns[0] && columns[0].trim() !== "" ? columns[0] : undefined;
-      const name = columns[1];
-      const category = columns[2] || "Categoría General";
-      const quantity = parseInt(columns[7]) || 0;
+      const id = cleanColumns[0] && cleanColumns[0] !== "" ? cleanColumns[0] : undefined;
+      const name = cleanColumns[1];
+      const category = cleanColumns[2] || "Categoría General";
+      const quantity = parseInt(cleanColumns[7]) || 0;
       
       if (!name) continue;
 
@@ -63,31 +71,31 @@ export async function POST(request: Request) {
             update: {
               name,
               category,
-              subcategory: columns[3],
-              part_number: columns[4],
-              value: columns[5],
-              package: columns[6],
+              subcategory: cleanColumns[3],
+              part_number: cleanColumns[4],
+              value: cleanColumns[5],
+              package: cleanColumns[6],
               current_quantity: quantity,
-              unit: columns[8] || "uds",
-              location: columns[9],
-              min_stock: parseInt(columns[10]) || 0,
-              description: columns[11],
-              notes: columns[12],
+              unit: cleanColumns[8] || "uds",
+              location: cleanColumns[9],
+              min_stock: parseInt(cleanColumns[10]) || 0,
+              description: cleanColumns[11],
+              notes: cleanColumns[12],
             },
             create: {
               id, // Might throw if invalid UUID, but handled by catch
               name,
               category,
-              subcategory: columns[3],
-              part_number: columns[4],
-              value: columns[5],
-              package: columns[6],
+              subcategory: cleanColumns[3],
+              part_number: cleanColumns[4],
+              value: cleanColumns[5],
+              package: cleanColumns[6],
               current_quantity: quantity,
-              unit: columns[8] || "uds",
-              location: columns[9],
-              min_stock: parseInt(columns[10]) || 0,
-              description: columns[11],
-              notes: columns[12],
+              unit: cleanColumns[8] || "uds",
+              location: cleanColumns[9],
+              min_stock: parseInt(cleanColumns[10]) || 0,
+              description: cleanColumns[11],
+              notes: cleanColumns[12],
             }
           });
           importedCount++;
@@ -97,16 +105,16 @@ export async function POST(request: Request) {
             data: {
               name,
               category,
-              subcategory: columns[3],
-              part_number: columns[4],
-              value: columns[5],
-              package: columns[6],
+              subcategory: cleanColumns[3],
+              part_number: cleanColumns[4],
+              value: cleanColumns[5],
+              package: cleanColumns[6],
               current_quantity: quantity,
-              unit: columns[8] || "uds",
-              location: columns[9],
-              min_stock: parseInt(columns[10]) || 0,
-              description: columns[11],
-              notes: columns[12],
+              unit: cleanColumns[8] || "uds",
+              location: cleanColumns[9],
+              min_stock: parseInt(cleanColumns[10]) || 0,
+              description: cleanColumns[11],
+              notes: cleanColumns[12],
             }
           });
           importedCount++;
@@ -117,16 +125,16 @@ export async function POST(request: Request) {
           data: {
             name,
             category,
-            subcategory: columns[3],
-            part_number: columns[4],
-            value: columns[5],
-            package: columns[6],
+            subcategory: cleanColumns[3],
+            part_number: cleanColumns[4],
+            value: cleanColumns[5],
+            package: cleanColumns[6],
             current_quantity: quantity,
-            unit: columns[8] || "uds",
-            location: columns[9],
-            min_stock: parseInt(columns[10]) || 0,
-            description: columns[11],
-            notes: columns[12],
+            unit: cleanColumns[8] || "uds",
+            location: cleanColumns[9],
+            min_stock: parseInt(cleanColumns[10]) || 0,
+            description: cleanColumns[11],
+            notes: cleanColumns[12],
           }
         });
         importedCount++;
