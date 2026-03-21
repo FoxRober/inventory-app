@@ -95,6 +95,11 @@ export default function EditComponentForm({ componentId, onSuccess, onCancel }: 
         </div>
 
         <div className="form-group">
+          <label>Stock Actual *</label>
+          <input type="number" name="current_quantity" defaultValue={data.current_quantity} min={0} required />
+        </div>
+
+        <div className="form-group">
           <label>Unidad</label>
           <select name="unit" defaultValue={data.unit || "uds"}>
             <option value="uds">Unidades (uds)</option>

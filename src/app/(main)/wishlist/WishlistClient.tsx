@@ -42,15 +42,15 @@ export default function WishlistClient({ initialItems }: { initialItems: any[] }
   const completedItems = items.filter(i => i.status !== "PENDIENTE");
 
   const renderCard = (item: any) => {
-    const isPending = item.status === "PENDIENTE";
+    const isItemPending = item.status === "PENDIENTE";
     return (
-      <div key={item.id} className={`wishlist-card glass ${item.priority.toLowerCase()} ${!isPending ? "completed" : ""}`}>
+      <div key={item.id} className={`wishlist-card glass ${item.priority.toLowerCase()} ${!isItemPending ? "completed" : ""}`}>
         <div className="card-header">
           <div className="title-group">
             <h3>{item.name}</h3>
             <span className="category-pill">{item.category}</span>
           </div>
-          {isPending && (
+          {isItemPending && (
             <span className={`priority-badge ${item.priority.toLowerCase()}`}>
               {item.priority}
             </span>
@@ -85,7 +85,7 @@ export default function WishlistClient({ initialItems }: { initialItems: any[] }
         </div>
 
         <div className="card-footer">
-          {isPending ? (
+          {isItemPending ? (
             <div className="action-buttons full-width">
               <button 
                 className="btn-success flex-1" 

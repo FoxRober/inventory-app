@@ -54,7 +54,7 @@ export async function createComponent(data: any) {
         min_stock: parseInt(data.min_stock) || 0,
         description: data.description,
         notes: data.notes,
-        image_url: data.image_url,
+        image_url: data.image_url?.trim() !== "" ? data.image_url : null,
       },
     });
     
@@ -147,10 +147,11 @@ export async function updateComponent(id: string, data: any) {
         package: data.package,
         unit: data.unit,
         location: data.location,
+        current_quantity: parseInt(data.current_quantity), // ADDED THIS
         min_stock: parseInt(data.min_stock) || 0,
         description: data.description,
         notes: data.notes,
-        image_url: data.image_url,
+        image_url: data.image_url?.trim() !== "" ? data.image_url : null,
       },
     });
     revalidatePath("/inventory");

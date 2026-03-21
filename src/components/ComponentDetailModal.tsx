@@ -150,7 +150,14 @@ export default function ComponentDetailModal({ isOpen, onClose, componentId }: D
               <div className="info-tab-wrapper">
                 {data.image_url && (
                   <div className="detail-image-wrapper">
-                    <img src={data.image_url} alt={data.name} />
+                    <img 
+                      src={data.image_url} 
+                      alt={data.name} 
+                      onError={(e) => { 
+                        e.currentTarget.style.display = 'none'; 
+                        addNotification("La URL de la imagen es inválida o no se puede cargar", "warning");
+                      }} 
+                    />
                   </div>
                 )}
                 <div className="info-grid">
