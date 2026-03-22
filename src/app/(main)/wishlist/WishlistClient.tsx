@@ -94,7 +94,7 @@ export default function WishlistClient({ initialItems }: { initialItems: any[] }
               <button 
                 className="btn-success flex-1" 
                 onClick={() => handleUpdateStatus(item.id, "COMPRADO")}
-                disabled={isItemPending}
+                disabled={isPending}
               >
                 <CheckCircle size={16} /> Comprado
               </button>
@@ -102,7 +102,7 @@ export default function WishlistClient({ initialItems }: { initialItems: any[] }
                 className="action-btn" 
                 title="Editar"
                 onClick={() => setEditModalItem(item)}
-                disabled={isItemPending}
+                disabled={isPending}
               >
                 <Edit size={16} />
               </button>

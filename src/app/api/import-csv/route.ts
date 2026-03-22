@@ -20,13 +20,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "El archivo no es un Excel válido (.xlsx)." }, { status: 400 });
     }
 
+    const sanitizeRow = (row: any) => {
+      const mapped = { ...row };
+      delete mapped.created_at;
+      delete mapped.updated_at;
+      if (mapped.approximate_cost) mapped.approximate_cost = parseFloat(mapped.approximate_cost);
+      return mapped;
+    };
+
     // Parse and upsert each sheet dynamically
-    const compsSheet = wb.Sheets["Componentes"];
+    const compsSheet = wb.Sheets["Componentes"] || wb.Sheets[wb.SheetNames[0]];
     if (compsSheet) {
       const components = xlsx.utils.sheet_to_json(compsSheet);
       for (const row of components as any[]) {
         if (!row.id || !row.name) continue;
-        await prisma.component.upsert({ where: { id: row.id }, update: { ...row }, create: { ...row } });
+        const mapped = sanitizeRow(row);
+        await prisma.component.upsert({ where: { id: row.id }, update: mapped, create: mapped });
       }
     }
 
@@ -35,7 +44,8 @@ export async function POST(req: NextRequest) {
       const projects = xlsx.utils.sheet_to_json(projSheet);
       for (const row of projects as any[]) {
         if (!row.id) continue;
-        await prisma.project.upsert({ where: { id: row.id }, update: { ...row }, create: { ...row } });
+        const mapped = sanitizeRow(row);
+        await prisma.project.upsert({ where: { id: row.id }, update: mapped, create: mapped });
       }
     }
 
@@ -44,7 +54,8 @@ export async function POST(req: NextRequest) {
       const pcs = xlsx.utils.sheet_to_json(pcSheet);
       for (const row of pcs as any[]) {
         if (!row.id) continue;
-        await prisma.projectComponent.upsert({ where: { id: row.id }, update: { ...row }, create: { ...row } });
+        const mapped = sanitizeRow(row);
+        await prisma.projectComponent.upsert({ where: { id: row.id }, update: mapped, create: mapped });
       }
     }
 
@@ -53,7 +64,8 @@ export async function POST(req: NextRequest) {
       const wls = xlsx.utils.sheet_to_json(wlSheet);
       for (const row of wls as any[]) {
         if (!row.id) continue;
-        await prisma.wishlistItem.upsert({ where: { id: row.id }, update: { ...row }, create: { ...row } });
+        const mapped = sanitizeRow(row);
+        await prisma.wishlistItem.upsert({ where: { id: row.id }, update: mapped, create: mapped });
       }
     }
 
@@ -62,7 +74,7 @@ export async function POST(req: NextRequest) {
       const loans = xlsx.utils.sheet_to_json(loanSheet);
       for (const row of loans as any[]) {
         if (!row.id) continue;
-        const mapped = {...row};
+        const mapped = sanitizeRow(row);
         if (mapped.date) mapped.date = new Date(mapped.date);
         if (mapped.expected_return_date) mapped.expected_return_date = new Date(mapped.expected_return_date);
         await prisma.loan.upsert({ where: { id: row.id }, update: mapped, create: mapped as any });
@@ -74,7 +86,7 @@ export async function POST(req: NextRequest) {
       const movements = xlsx.utils.sheet_to_json(movSheet);
       for (const row of movements as any[]) {
         if (!row.id) continue;
-        const mapped = {...row};
+        const mapped = sanitizeRow(row);
         if (mapped.date) mapped.date = new Date(mapped.date);
         await prisma.movement.upsert({ where: { id: row.id }, update: mapped, create: mapped as any });
       }

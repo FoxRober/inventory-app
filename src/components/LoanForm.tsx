@@ -55,8 +55,8 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
 
   return (
     <form className="component-form" onSubmit={handleSubmit}>
-      <div className="form-grid">
-        <div className="form-group col-span-2">
+      <div className="flex-col" style={{ gap: '1rem' }}>
+        <div className="form-group">
           <label>Componente a Prestar *</label>
           <select 
             value={selectedCompId} 
@@ -91,12 +91,12 @@ export default function LoanForm({ onSuccess, onCancel }: LoanFormProps) {
           />
         </div>
 
-        <div className="form-group col-span-2">
+        <div className="form-group">
           <label>Fecha Estimada de Devolución (Opcional)</label>
           <input type="date" name="expected_return_date" />
         </div>
 
-        <div className="form-group col-span-2">
+        <div className="form-group">
           <label>Notas adicionales</label>
           <textarea name="notes" rows={2} placeholder="Condiciones, proyecto destino..."></textarea>
         </div>
