@@ -178,8 +178,10 @@ export default function ComponentDetailModal({ isOpen, onClose, componentId }: D
                   <span className="value">{data.part_number || "-"}</span>
                 </div>
                 <div className="info-item">
-                  <span className="label">Encapsulado</span>
-                  <span className="value">{data.package || "-"}</span>
+                  <span className="label">Costo Aproximado</span>
+                  <span className="value">
+                    {data.approximate_cost ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(data.approximate_cost) : "-"}
+                  </span>
                 </div>
                 <div className="info-item">
                   <span className="label">Ubicación Física</span>

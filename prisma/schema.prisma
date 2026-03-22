@@ -17,7 +17,7 @@ model Component {
   subcategory      String?
   part_number      String?
   value            String?
-  package          String?
+  approximate_cost Float?
   current_quantity Int          @default(0)
   unit             String       @default("uds")
   location         String?

@@ -108,8 +108,9 @@ export default function InventoryClient({ initialComponents }: { initialComponen
                 <th>Nombre / Valor</th>
                 <th>Categoría</th>
                 <th>Ubicación</th>
-                <th>Referencia / Pkg</th>
-                <th>Stock</th>
+                <th>Ref / Costo</th>
+                <th>Asignaciones</th>
+                <th>Stock Disponible</th>
                 <th className="text-right">Acciones</th>
               </tr>
             </thead>
@@ -151,7 +152,26 @@ export default function InventoryClient({ initialComponents }: { initialComponen
                     <td>{comp.location || "-"}</td>
                     <td>
                       <div className="text-sm">{comp.part_number || "-"}</div>
-                      <div className="text-xs text-muted">{comp.package || "-"}</div>
+                      <div className="text-xs text-muted">
+                        {comp.approximate_cost ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(comp.approximate_cost) : "-"}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="flex-col" style={{ gap: '0.25rem' }}>
+                        {comp.projects?.length > 0 ? (
+                          <span className="text-info text-xs font-semibold bg-info-bg px-2 py-0.5 rounded w-fit">
+                            En Proyectos: {comp.projects.reduce((s: number, p: any) => s + p.quantity, 0)}
+                          </span>
+                        ) : null}
+                        {comp.loans?.length > 0 ? (
+                          <span className="text-warning text-xs font-semibold bg-warning-bg px-2 py-0.5 rounded w-fit">
+                            Prestados: {comp.loans.reduce((s: number, l: any) => s + l.quantity, 0)}
+                          </span>
+                        ) : null}
+                        {(!comp.projects?.length && !comp.loans?.length) ? (
+                          <span className="text-muted text-xs">Ninguna</span>
+                        ) : null}
+                      </div>
                     </td>
                     <td>
                       <div className="flex-row gap-2">

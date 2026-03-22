@@ -12,7 +12,7 @@ export default function MovementsClient({ initialMovements }: { initialMovements
 
   const filteredMovements = initialMovements.filter(mov => {
     const matchesSearch = 
-      mov.component.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      (mov.component?.name || "Eliminado").toLowerCase().includes(searchQuery.toLowerCase()) || 
       (mov.notes || "").toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesType = filterType === "ALL" || mov.type === filterType;
@@ -83,8 +83,8 @@ export default function MovementsClient({ initialMovements }: { initialMovements
                       </div>
                     </td>
                     <td>
-                      <div className="font-medium">{mov.component.name}</div>
-                      {mov.component.part_number && (
+                      <div className="font-medium">{mov.component?.name || "Componente Eliminado"}</div>
+                      {mov.component?.part_number && (
                         <div className="text-xs text-muted">Ref: {mov.component.part_number}</div>
                       )}
                     </td>
@@ -96,7 +96,7 @@ export default function MovementsClient({ initialMovements }: { initialMovements
                     </td>
                     <td>
                       <span className={`qty-indicator ${isEntry ? "success" : "danger"}`}>
-                        {isEntry ? "+" : "-"}{Math.abs(mov.quantity)} {mov.component.unit}
+                        {isEntry ? "+" : "-"}{Math.abs(mov.quantity)} {mov.component?.unit || "uds"}
                       </span>
                     </td>
                     <td className="text-muted text-sm">{mov.notes || "-"}</td>

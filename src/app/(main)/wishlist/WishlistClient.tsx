@@ -7,6 +7,8 @@ import { updateWishlistItemStatus } from "@/actions/wishlist";
 import { useNotifications } from "@/context/NotificationContext";
 import Modal from "@/components/Modal";
 import WishlistForm from "@/components/WishlistForm";
+import EditWishlistForm from "@/components/EditWishlistForm";
+import { Edit } from "lucide-react";
 import "./wishlist.css";
 
 // Un simple helper nativo para el formato de moneda.
@@ -19,6 +21,7 @@ export default function WishlistClient({ initialItems }: { initialItems: any[] }
   const [items, setItems] = useState(initialItems);
   const [isPending, startTransition] = useTransition();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editModalItem, setEditModalItem] = useState<any>(null);
   const { addNotification } = useNotifications();
 
   const handleUpdateStatus = (id: string, newStatus: "COMPRADO" | "DESCARTADO") => {
@@ -35,6 +38,7 @@ export default function WishlistClient({ initialItems }: { initialItems: any[] }
 
   const handleCreateSuccess = () => {
     setIsCreateModalOpen(false);
+    setEditModalItem(null);
     router.refresh();
   };
 
@@ -90,9 +94,17 @@ export default function WishlistClient({ initialItems }: { initialItems: any[] }
               <button 
                 className="btn-success flex-1" 
                 onClick={() => handleUpdateStatus(item.id, "COMPRADO")}
-                disabled={isPending}
+                disabled={isItemPending}
               >
                 <CheckCircle size={16} /> Comprado
+              </button>
+              <button 
+                className="action-btn" 
+                title="Editar"
+                onClick={() => setEditModalItem(item)}
+                disabled={isItemPending}
+              >
+                <Edit size={16} />
               </button>
               <button 
                 className="action-btn danger" 
@@ -152,6 +164,16 @@ export default function WishlistClient({ initialItems }: { initialItems: any[] }
 
       <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Añadir a Wishlist">
         <WishlistForm onSuccess={handleCreateSuccess} onCancel={() => setIsCreateModalOpen(false)} />
+      </Modal>
+
+      <Modal isOpen={!!editModalItem} onClose={() => setEditModalItem(null)} title="Editar Ítem de Wishlist">
+        {editModalItem && (
+          <EditWishlistForm 
+            item={editModalItem}
+            onSuccess={handleCreateSuccess}
+            onCancel={() => setEditModalItem(null)}
+          />
+        )}
       </Modal>
     </>
   );

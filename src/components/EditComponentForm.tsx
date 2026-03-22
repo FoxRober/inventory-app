@@ -80,8 +80,8 @@ export default function EditComponentForm({ componentId, onSuccess, onCancel }: 
         </div>
 
         <div className="form-group">
-          <label>Encapsulado (Package)</label>
-          <input type="text" name="package" defaultValue={data.package || ""} />
+          <label>Costo aproximado (COP)</label>
+          <input type="number" step="0.01" name="approximate_cost" defaultValue={data.approximate_cost || ""} placeholder="Ej: 1500" />
         </div>
 
         <div className="form-group">

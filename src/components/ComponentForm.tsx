@@ -68,8 +68,8 @@ export default function ComponentForm({ onSuccess, onCancel }: ComponentFormProp
         </div>
 
         <div className="form-group">
-          <label>Encapsulado (Package)</label>
-          <input type="text" name="package" placeholder="Ej: DIP-8, 0805, TO-92" />
+          <label>Costo aproximado (COP)</label>
+          <input type="number" step="0.01" name="approximate_cost" placeholder="Ej: 1500" />
         </div>
 
         <div className="form-group">

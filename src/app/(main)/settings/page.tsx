@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Download, Upload, Database, ShieldAlert } from "lucide-react";
 import { useNotifications } from "@/context/NotificationContext";
-import { resetDatabase } from "@/actions/system";
+import { resetDatabase, clearHistory } from "@/actions/system";
 import "./settings.css";
 
 export default function SettingsPage() {
@@ -55,6 +55,18 @@ export default function SettingsPage() {
     }
   };
 
+  const handleClearHistory = async () => {
+    if (window.confirm("¿Seguro que deseas eliminar TODO el historial de pruebas (Movimientos y Préstamos)? Tus componentes y proyectos quedarán intactos.")) {
+      const res = await clearHistory();
+      if (res.success) {
+        addNotification("Historial limpiado correctamente", "success");
+        setTimeout(() => router.refresh(), 500);
+      } else {
+        addNotification(`Error: ${res.error}`, "error");
+      }
+    }
+  };
+
   return (
     <div className="settings-wrapper">
       <div className="page-header">
@@ -70,8 +82,8 @@ export default function SettingsPage() {
             <Database size={24} />
           </div>
           <div className="panel-content">
-            <h2>Exportar Datos (CSV)</h2>
-            <p className="text-muted">Descarga un archivo CSV con todo el catálogo de componentes actual.</p>
+            <h2>Exportar Backup (Excel)</h2>
+            <p className="text-muted">Descarga un archivo .xlsx con el snapshot completo de Componentes, Wishlist, Préstamos y Proyectos.</p>
             <div className="mt-4">
               <a href="/api/export-csv" className="btn-primary inline-flex gap-2">
                 <Download size={18} /> Exportar Inventario
@@ -85,12 +97,12 @@ export default function SettingsPage() {
             <Upload size={24} />
           </div>
           <div className="panel-content">
-            <h2>Importar Datos (CSV)</h2>
-            <p className="text-muted">Actualiza o inserta nuevos componentes usando un archivo CSV.</p>
+            <h2>Restaurar Backup (Excel)</h2>
+            <p className="text-muted">Sube tu archivo Backup (.xlsx) para restaurar todo de forma segura.</p>
             <div className="mt-4">
               <input 
                 type="file" 
-                accept=".csv"
+                accept=".xlsx"
                 id="csv-upload"
                 className="hidden"
                 disabled={isUploading}
@@ -110,9 +122,12 @@ export default function SettingsPage() {
           <div className="panel-content">
             <h2 className="text-danger">Zona de Peligro</h2>
             <p className="text-muted">Elimina todos los registros de movimientos, préstamos, wishlist y componentes.</p>
-            <div className="mt-4 action-buttons">
+            <div className="mt-4 action-buttons" style={{ display: "flex", gap: "1rem" }}>
               <button className="btn-danger-outline" onClick={handleResetDatabase}>
-                Resetear Base de Datos
+                Resetear Toda la Base de Datos
+              </button>
+              <button className="btn-warning" style={{ color: '#000' }} onClick={handleClearHistory}>
+                Limpiar Solo Historial (Pruebas)
               </button>
             </div>
           </div>

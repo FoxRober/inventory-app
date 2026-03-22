@@ -7,6 +7,12 @@ export async function getComponents() {
   try {
     const components = await prisma.component.findMany({
       orderBy: { name: "asc" },
+      include: {
+        projects: true,
+        loans: {
+          where: { status: "PRESTADO" }
+        }
+      }
     });
     return components;
   } catch (error) {
@@ -47,7 +53,7 @@ export async function createComponent(data: any) {
         subcategory: data.subcategory,
         part_number: data.part_number,
         value: data.value,
-        package: data.package,
+        approximate_cost: data.approximate_cost ? parseFloat(data.approximate_cost) : null,
         current_quantity: parseInt(data.current_quantity) || 0,
         unit: data.unit,
         location: data.location,
@@ -144,7 +150,7 @@ export async function updateComponent(id: string, data: any) {
         subcategory: data.subcategory,
         part_number: data.part_number,
         value: data.value,
-        package: data.package,
+        approximate_cost: data.approximate_cost ? parseFloat(data.approximate_cost) : null,
         unit: data.unit,
         location: data.location,
         current_quantity: parseInt(data.current_quantity), // ADDED THIS

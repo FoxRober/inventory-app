@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Search, Filter, CheckCircle, XCircle } from "lucide-react";
+import { Search, Filter, CheckCircle, XCircle, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { markLoanAs } from "@/actions/loans";
 import { useNotifications } from "@/context/NotificationContext";
+import Modal from "@/components/Modal";
+import LoanForm from "@/components/LoanForm";
 import "./loans.css";
 
 export default function LoansClient({ initialLoans }: { initialLoans: any[] }) {
@@ -13,6 +15,7 @@ export default function LoansClient({ initialLoans }: { initialLoans: any[] }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("ALL");
   const [isPending, startTransition] = useTransition();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { addNotification } = useNotifications();
 
   const filteredLoans = loans.filter(loan => {
@@ -80,6 +83,10 @@ export default function LoansClient({ initialLoans }: { initialLoans: any[] }) {
               <option value="PERDIDO">Perdidos</option>
             </select>
           </div>
+          <button className="btn-primary flex-row gap-2" onClick={() => setIsCreateModalOpen(true)}>
+            <Plus size={18} />
+            <span>Nuevo Préstamo</span>
+          </button>
         </div>
       </div>
 
@@ -168,6 +175,10 @@ export default function LoansClient({ initialLoans }: { initialLoans: any[] }) {
           </tbody>
         </table>
       </div>
+
+      <Modal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} title="Registrar Préstamo">
+        <LoanForm onSuccess={() => { setIsCreateModalOpen(false); window.location.reload(); }} onCancel={() => setIsCreateModalOpen(false)} />
+      </Modal>
     </div>
   );
 }

@@ -22,3 +22,20 @@ export async function resetDatabase() {
     return { success: false, error: error.message };
   }
 }
+
+export async function clearHistory() {
+  try {
+    await prisma.movement.deleteMany({});
+    await prisma.loan.deleteMany({});
+    
+    revalidatePath("/");
+    revalidatePath("/inventory");
+    revalidatePath("/loans");
+    revalidatePath("/movements");
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error("History clear error:", error);
+    return { success: false, error: error.message };
+  }
+}

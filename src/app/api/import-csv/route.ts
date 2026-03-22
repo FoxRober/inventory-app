@@ -1,149 +1,88 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import * as xlsx from "xlsx";
 
-export async function POST(request: Request) {
+export async function POST(req: NextRequest) {
   try {
-    const formData = await request.formData();
+    const formData = await req.formData();
     const file = formData.get("file") as File;
-
     if (!file) {
-      return NextResponse.json({ error: "No se proporcionó ningún archivo" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "No se proporcionó ningún archivo." }, { status: 400 });
     }
 
-    const text = await file.text();
-    // Support both Windows \r\n and Unix \n
-    const rows = text.split(/\r?\n/).filter(row => row.trim().length > 0);
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
     
-    if (rows.length <= 1) {
-      return NextResponse.json({ error: "El archivo parece estar vacío o no tener datos válidos" }, { status: 400 });
+    let wb;
+    try {
+      wb = xlsx.read(buffer, { type: "buffer" });
+    } catch(e) {
+      return NextResponse.json({ success: false, error: "El archivo no es un Excel válido (.xlsx)." }, { status: 400 });
     }
 
-    // Detect delimiter from the first row (headers)
-    const headerRow = rows[0];
-    const delimiter = headerRow.split(';').length > headerRow.split(',').length ? ';' : ',';
-
-    // Skip the first row (headers)
-    const dataRows = rows.slice(1);
-    let importedCount = 0;
-
-    for (const row of dataRows) {
-      // Basic CSV parsing respecting quotes
-      const columns = [];
-      let inQuotes = false;
-      let currentString = "";
-      
-      for (let i = 0; i < row.length; i++) {
-        const char = row[i];
-        if (char === '"' && row[i+1] === '"') {
-          currentString += '"';
-          i++; // skip escaped quote
-        } else if (char === '"') {
-          inQuotes = !inQuotes;
-        } else if (char === delimiter && !inQuotes) {
-          columns.push(currentString);
-          currentString = "";
-        } else {
-          currentString += char;
-        }
-      }
-      columns.push(currentString); // Push the last column
-
-      if (columns.length < 2) continue; // Skip invalid rows
-
-      // Normalize columns (remove trailing \r just in case)
-      const cleanColumns = columns.map(c => c.replace(/\r$/, '').trim());
-
-      // Map columns based on the export format we defined earlier
-      // 0: ID, 1: Nombre, 2: Categoría, 3: Subcategoría, 4: Referencia, 5: Valor, 6: Encapsulado, 
-      // 7: Cantidad, 8: Unidad, 9: Ubicación, 10: Stock Mínimo, 11: Descripción, 12: Notas
-      const id = cleanColumns[0] && cleanColumns[0] !== "" ? cleanColumns[0] : undefined;
-      const name = cleanColumns[1];
-      const category = cleanColumns[2] || "Categoría General";
-      const quantity = parseInt(cleanColumns[7]) || 0;
-      
-      if (!name) continue;
-
-      if (id) {
-        // Try to update existing or create if it doesn't match format perfectly
-        try {
-          await prisma.component.upsert({
-            where: { id },
-            update: {
-              name,
-              category,
-              subcategory: cleanColumns[3],
-              part_number: cleanColumns[4],
-              value: cleanColumns[5],
-              package: cleanColumns[6],
-              current_quantity: quantity,
-              unit: cleanColumns[8] || "uds",
-              location: cleanColumns[9],
-              min_stock: parseInt(cleanColumns[10]) || 0,
-              description: cleanColumns[11],
-              notes: cleanColumns[12],
-            },
-            create: {
-              id, // Might throw if invalid UUID, but handled by catch
-              name,
-              category,
-              subcategory: cleanColumns[3],
-              part_number: cleanColumns[4],
-              value: cleanColumns[5],
-              package: cleanColumns[6],
-              current_quantity: quantity,
-              unit: cleanColumns[8] || "uds",
-              location: cleanColumns[9],
-              min_stock: parseInt(cleanColumns[10]) || 0,
-              description: cleanColumns[11],
-              notes: cleanColumns[12],
-            }
-          });
-          importedCount++;
-        } catch (e) {
-          // Fallback to purely creating new if ID is invalid UUID format
-          await prisma.component.create({
-            data: {
-              name,
-              category,
-              subcategory: cleanColumns[3],
-              part_number: cleanColumns[4],
-              value: cleanColumns[5],
-              package: cleanColumns[6],
-              current_quantity: quantity,
-              unit: cleanColumns[8] || "uds",
-              location: cleanColumns[9],
-              min_stock: parseInt(cleanColumns[10]) || 0,
-              description: cleanColumns[11],
-              notes: cleanColumns[12],
-            }
-          });
-          importedCount++;
-        }
-      } else {
-         // Create new directly
-         await prisma.component.create({
-          data: {
-            name,
-            category,
-            subcategory: cleanColumns[3],
-            part_number: cleanColumns[4],
-            value: cleanColumns[5],
-            package: cleanColumns[6],
-            current_quantity: quantity,
-            unit: cleanColumns[8] || "uds",
-            location: cleanColumns[9],
-            min_stock: parseInt(cleanColumns[10]) || 0,
-            description: cleanColumns[11],
-            notes: cleanColumns[12],
-          }
-        });
-        importedCount++;
+    // Parse and upsert each sheet dynamically
+    const compsSheet = wb.Sheets["Componentes"];
+    if (compsSheet) {
+      const components = xlsx.utils.sheet_to_json(compsSheet);
+      for (const row of components as any[]) {
+        if (!row.id || !row.name) continue;
+        await prisma.component.upsert({ where: { id: row.id }, update: { ...row }, create: { ...row } });
       }
     }
 
-    return NextResponse.json({ success: true, count: importedCount });
-  } catch (error) {
+    const projSheet = wb.Sheets["Proyectos"];
+    if (projSheet) {
+      const projects = xlsx.utils.sheet_to_json(projSheet);
+      for (const row of projects as any[]) {
+        if (!row.id) continue;
+        await prisma.project.upsert({ where: { id: row.id }, update: { ...row }, create: { ...row } });
+      }
+    }
+
+    const pcSheet = wb.Sheets["ProjectComponents"];
+    if (pcSheet) {
+      const pcs = xlsx.utils.sheet_to_json(pcSheet);
+      for (const row of pcs as any[]) {
+        if (!row.id) continue;
+        await prisma.projectComponent.upsert({ where: { id: row.id }, update: { ...row }, create: { ...row } });
+      }
+    }
+
+    const wlSheet = wb.Sheets["Wishlist"];
+    if (wlSheet) {
+      const wls = xlsx.utils.sheet_to_json(wlSheet);
+      for (const row of wls as any[]) {
+        if (!row.id) continue;
+        await prisma.wishlistItem.upsert({ where: { id: row.id }, update: { ...row }, create: { ...row } });
+      }
+    }
+
+    const loanSheet = wb.Sheets["Prestamos"];
+    if (loanSheet) {
+      const loans = xlsx.utils.sheet_to_json(loanSheet);
+      for (const row of loans as any[]) {
+        if (!row.id) continue;
+        const mapped = {...row};
+        if (mapped.date) mapped.date = new Date(mapped.date);
+        if (mapped.expected_return_date) mapped.expected_return_date = new Date(mapped.expected_return_date);
+        await prisma.loan.upsert({ where: { id: row.id }, update: mapped, create: mapped as any });
+      }
+    }
+
+    const movSheet = wb.Sheets["Movimientos"];
+    if (movSheet) {
+      const movements = xlsx.utils.sheet_to_json(movSheet);
+      for (const row of movements as any[]) {
+        if (!row.id) continue;
+        const mapped = {...row};
+        if (mapped.date) mapped.date = new Date(mapped.date);
+        await prisma.movement.upsert({ where: { id: row.id }, update: mapped, create: mapped as any });
+      }
+    }
+    
+    return NextResponse.json({ success: true, count: compsSheet ? xlsx.utils.sheet_to_json(compsSheet).length : 0 });
+  } catch (error: any) {
     console.error("Import error:", error);
-    return NextResponse.json({ error: "Error procesando el archivo CSV" }, { status: 500 });
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

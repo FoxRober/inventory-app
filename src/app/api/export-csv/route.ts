@@ -1,62 +1,35 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import * as xlsx from "xlsx";
 
 export async function GET() {
   try {
-    const components = await prisma.component.findMany({
-      orderBy: { name: "asc" }
-    });
+    const components = await prisma.component.findMany();
+    const projects = await prisma.project.findMany();
+    const projectComponents = await prisma.projectComponent.findMany();
+    const wishlist = await prisma.wishlistItem.findMany();
+    const loans = await prisma.loan.findMany();
+    const movements = await prisma.movement.findMany();
 
-    // Construir CSV
-    const headers = [
-      "ID",
-      "Nombre",
-      "Categoría",
-      "Subcategoría",
-      "Referencia",
-      "Valor",
-      "Encapsulado",
-      "Cantidad",
-      "Unidad",
-      "Ubicación",
-      "Stock Mínimo",
-      "Descripción",
-      "Notas"
-    ];
+    const wb = xlsx.utils.book_new();
 
-    const escapeCsv = (str: any) => {
-      if (str === null || str === undefined) return '""';
-      const cleanStr = String(str).replace(/"/g, '""');
-      return `"${cleanStr}"`;
-    };
+    xlsx.utils.book_append_sheet(wb, xlsx.utils.json_to_sheet(components), "Componentes");
+    xlsx.utils.book_append_sheet(wb, xlsx.utils.json_to_sheet(projects), "Proyectos");
+    xlsx.utils.book_append_sheet(wb, xlsx.utils.json_to_sheet(projectComponents), "ProjectComponents");
+    xlsx.utils.book_append_sheet(wb, xlsx.utils.json_to_sheet(wishlist), "Wishlist");
+    xlsx.utils.book_append_sheet(wb, xlsx.utils.json_to_sheet(loans), "Prestamos");
+    xlsx.utils.book_append_sheet(wb, xlsx.utils.json_to_sheet(movements), "Movimientos");
 
-    const rows = components.map((c: any) => [
-      escapeCsv(c.id),
-      escapeCsv(c.name),
-      escapeCsv(c.category),
-      escapeCsv(c.subcategory),
-      escapeCsv(c.part_number),
-      escapeCsv(c.value),
-      escapeCsv(c.package),
-      c.current_quantity,
-      escapeCsv(c.unit),
-      escapeCsv(c.location),
-      c.min_stock,
-      escapeCsv(c.description),
-      escapeCsv(c.notes)
-    ].join(","));
+    const buf = xlsx.write(wb, { type: "buffer", bookType: "xlsx" });
 
-    const csvContent = [headers.join(","), ...rows].join("\n");
-
-    return new NextResponse(csvContent, {
+    return new Response(buf, {
       status: 200,
       headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": 'attachment; filename="inventario_componentes.csv"',
+        "Content-Disposition": `attachment; filename="inventario_backup_${new Date().getTime()}.xlsx"`,
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       },
     });
-  } catch (error) {
-    console.error("Export error:", error);
-    return NextResponse.json({ error: "No se pudo exportar el CSV" }, { status: 500 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

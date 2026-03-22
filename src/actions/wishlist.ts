@@ -54,3 +54,28 @@ export async function updateWishlistItemStatus(id: string, status: "PENDIENTE" |
     return { success: false, error: error.message };
   }
 }
+
+export async function updateWishlistItem(id: string, data: any) {
+  try {
+    const updated = await prisma.wishlistItem.update({
+      where: { id },
+      data: {
+        name: data.name,
+        category: data.category,
+        quantity: parseInt(data.quantity) || 1,
+        priority: data.priority,
+        estimated_price: data.estimated_price ? parseFloat(data.estimated_price) : null,
+        store: data.store,
+        url: data.url,
+        reason: data.reason,
+      },
+    });
+
+    revalidatePath("/wishlist");
+    revalidatePath("/");
+    return { success: true, data: updated };
+  } catch (error: any) {
+    console.error("Error updating wishlist item full:", error);
+    return { success: false, error: error.message };
+  }
+}
