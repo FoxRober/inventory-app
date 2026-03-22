@@ -21,6 +21,26 @@ export async function getComponents() {
   }
 }
 
+export async function getComponentsLight() {
+  try {
+    const components = await prisma.component.findMany({
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        value: true,
+        unit: true,
+        current_quantity: true,
+        category: true,
+      }
+    });
+    return components;
+  } catch (error) {
+    console.error("Error fetching components (light):", error);
+    return [];
+  }
+}
+
 export async function getComponentById(id: string) {
   try {
     const component = await prisma.component.findUnique({

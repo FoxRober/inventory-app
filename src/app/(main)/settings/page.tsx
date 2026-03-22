@@ -98,11 +98,11 @@ export default function SettingsPage() {
           </div>
           <div className="panel-content">
             <h2>Restaurar Backup (Excel)</h2>
-            <p className="text-muted">Sube tu archivo Backup (.xlsx) para restaurar todo de forma segura.</p>
+            <p className="text-muted">Sube tu Backup Excel (.xlsx) o un CSV con componentes para importar.</p>
             <div className="mt-4">
               <input 
                 type="file" 
-                accept=".xlsx"
+                accept=".xlsx,.csv"
                 id="csv-upload"
                 className="hidden"
                 disabled={isUploading}
