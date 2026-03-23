@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import * as xlsx from "xlsx";
 
@@ -191,6 +192,8 @@ export async function POST(req: NextRequest) {
       errors.length > 0
         ? `Importados: ${importedCount}. Advertencias: ${errors.slice(0, 3).join("; ")}`
         : `${importedCount} componentes importados correctamente.`;
+
+    revalidatePath("/", "layout");
 
     return NextResponse.json({ success: true, count: importedCount, message, errors });
   } catch (error: any) {
